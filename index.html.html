@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recovery Timeline View - Aman Irshad</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f6f8;
+    color: #1a1a2e;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .page {
+    max-width: 560px;
+    margin: 0 auto;
+    background: #fff;
+    min-height: 100vh;
+  }
+
+  .header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #eee;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .header-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-name h1 { font-size: 17px; font-weight: 700; color: #111; }
+  .badge-id {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: #555;
+    font-weight: 500;
+  }
+  .badge-status {
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #2e7d32;
+  }
+  .header-meta {
+    font-size: 11.5px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .header-meta .dot { color: #bbb; }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: #eee;
+    border: 1px solid #eee;
+    margin: 0 16px 12px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .info-cell { background: #fff; padding: 10px 12px; }
+  .info-cell-label { font-size: 10px; color: #888; margin-bottom: 3px; }
+  .info-cell-value { font-size: 12.5px; font-weight: 600; color: #222; }
+  .info-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: #eee;
+    border: 1px solid #eee;
+    margin: 0 16px 16px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .section-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #888;
+    padding: 0 16px;
+    margin-bottom: 8px;
+  }
+
+  .breakdown-card {
+    margin: 0 16px 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px 6px;
+  }
+  .breakdown-header-label { font-size: 11.5px; font-weight: 700; color: #4a7c59; }
+  .badge-comprehensive {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 12px;
+    padding: 2px 9px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #1565c0;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 14px;
+    border-top: 1px solid #f5f5f5;
+  }
+  .breakdown-row-label { color: #444; font-size: 12.5px; }
+  .breakdown-row-value { font-size: 12.5px; color: #222; font-weight: 500; }
+  .breakdown-row.total { border-top: 1.5px solid #e0e0e0; padding: 9px 14px; }
+  .breakdown-row.total .breakdown-row-label { font-weight: 700; color: #111; }
+  .breakdown-row.total .breakdown-row-value { font-weight: 700; color: #4a7c59; font-size: 13px; }
+  .breakdown-row.highlight .breakdown-row-label { color: #1565c0; font-weight: 600; }
+  .breakdown-row.highlight .breakdown-row-value { color: #1565c0; font-weight: 700; }
+  .breakdown-row.advance-amt .breakdown-row-label { font-weight: 700; color: #111; }
+  .breakdown-row.advance-amt .breakdown-row-value { font-weight: 700; color: #111; font-size: 13px; }
+
+  .fin-section { padding: 0 0 24px; }
+  .fin-section-header {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #888;
+    padding: 0 16px 12px;
+  }
+
+  .timeline { position: relative; padding: 0 16px; }
+  .timeline-item { display: flex; gap: 12px; position: relative; }
+
+  .tl-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 30px;
+  }
+  .tl-icon {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; z-index: 1;
+    border: 2px solid #fff; box-shadow: 0 0 0 1.5px #ddd;
+  }
+  .tl-icon.green  { background: #e8f5e9; color: #2e7d32; box-shadow: 0 0 0 1.5px #a5d6a7; }
+  .tl-icon.orange { background: #fff3e0; color: #e65100; box-shadow: 0 0 0 1.5px #ffcc80; }
+  .tl-icon.gray   { background: #f5f5f5; color: #555;    box-shadow: 0 0 0 1.5px #ddd; }
+
+  .tl-line { width: 2px; flex: 1; background: #e0e0e0; margin: 4px 0; min-height: 20px; }
+  .tl-body { flex: 1; padding-bottom: 24px; }
+
+  .disbursed-card {
+    background: #f1f8f2;
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .disbursed-title { font-size: 13px; font-weight: 700; color: #1b5e20; }
+  .disbursed-sub { font-size: 11px; color: #555; margin-top: 2px; }
+  .disbursed-right { display: flex; gap: 8px; align-items: center; }
+  .badge-processed {
+    background: #e8f5e9; border: 1px solid #a5d6a7;
+    border-radius: 12px; padding: 3px 9px;
+    font-size: 10.5px; font-weight: 600; color: #2e7d32;
+  }
+  .btn-payslip {
+    background: #fff; border: 1.5px solid #1565c0; border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; font-weight: 600; color: #1565c0;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer; text-decoration: none;
+  }
+
+  .er-header { margin-bottom: 10px; }
+  .er-title { font-size: 13.5px; font-weight: 700; color: #333; margin-bottom: 3px; }
+  .er-sub { font-size: 11.5px; color: #666; }
+  .er-sub strong { color: #333; }
+
+  .pbp-section { padding: 0 16px 24px; }
+  .pbp-title {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: #888; margin-bottom: 12px;
+  }
+
+  .acc-card {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px; overflow: hidden;
+    margin-bottom: 10px; background: #fff;
+  }
+
+  .acc-summary {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px; background: #fafafa;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+
+  .acc-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11.5px; font-weight: 700; flex-shrink: 0;
+    background: #e3f2fd; color: #1565c0; border: 1.5px solid #90caf9;
+  }
+  .acc-card.processed .acc-num { background: #e8f5e9; color: #2e7d32; border: 1.5px solid #a5d6a7; }
+
+  .acc-meta { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .acc-month { font-size: 14px; font-weight: 700; color: #222; }
+
+  .acc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .acc-badge-processed {
+    background: #e8f5e9; border: 1px solid #a5d6a7;
+    border-radius: 12px; padding: 3px 9px;
+    font-size: 10px; font-weight: 700; color: #2e7d32;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .acc-badge-processed::before { content: '●'; font-size: 8px; }
+
+  .acc-badge-pending {
+    background: #fff8e1; border: 1px solid #ffd54f;
+    border-radius: 12px; padding: 3px 9px;
+    font-size: 10px; font-weight: 700; color: #e65100;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .acc-badge-pending::before { content: '●'; font-size: 8px; }
+
+  .btn-payslip-sm {
+    background: #fff; border: 1.5px solid #1565c0; border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; font-weight: 600; color: #1565c0;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .btn-simulate {
+    background: #fff; border: 1.5px solid #e65100; border-radius: 6px;
+    padding: 4px 10px; font-size: 11px; font-weight: 600; color: #e65100;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer; white-space: nowrap;
+  }
+
+  .acc-chevron { font-size: 10px; color: #aaa; transition: transform 0.2s; flex-shrink: 0; }
+  .acc-chevron.open { transform: rotate(180deg); }
+
+  .acc-detail {
+    display: none;
+    border-top: 1px solid #e8e8e8;
+    padding: 12px 14px 14px;
+  }
+  .acc-detail.open { display: block; }
+
+  .pbp-line {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 6px 0; border-top: 1px solid #f5f5f5; gap: 8px;
+  }
+  .pbp-line:first-child { border-top: none; }
+  .pbp-line-left { display: flex; align-items: flex-start; gap: 7px; flex: 1; }
+  .pbp-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+    flex-shrink: 0; margin-top: 3px;
+  }
+  .pbp-dot.amber { background: #e65100; }
+  .pbp-dot.blue  { background: #1565c0; }
+  .pbp-dot.gray  { background: #bbb; }
+  .pbp-line-main { font-size: 12px; font-weight: 500; color: #333; }
+  .pbp-line-amount { font-size: 12px; font-weight: 600; color: #222; white-space: nowrap; }
+  .pbp-line-amount-dimmed { font-size: 12px; font-weight: 500; color: #aaa; white-space: nowrap; }
+
+  .pbp-total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0 4px;
+    border-top: 1.5px solid #e0e0e0; margin-top: 4px;
+  }
+  .pbp-total-label { font-size: 12px; font-weight: 700; color: #333; }
+  .pbp-total-helper { font-size: 9.5px; color: #aaa; margin-top: 1px; }
+  .pbp-total-amount { font-size: 14px; font-weight: 800; color: #b71c1c; white-space: nowrap; }
+
+  .complete-card {
+    margin: 0 16px 20px;
+    background: #e8f5e9; border: 1.5px solid #a5d6a7;
+    border-radius: 10px; padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .complete-left { display: flex; align-items: flex-start; gap: 8px; }
+  .complete-icon { font-size: 16px; margin-top: 1px; }
+  .complete-title { font-size: 13px; font-weight: 700; color: #1b5e20; margin-bottom: 2px; }
+  .complete-sub { font-size: 11px; color: #4a7c59; }
+  .complete-right { text-align: right; }
+  .complete-closed-label { font-size: 9.5px; color: #888; margin-bottom: 1px; }
+  .complete-closed-date { font-size: 12px; font-weight: 700; color: #2e7d32; }
+
+  .comments-label {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: #888; padding: 0 16px 12px;
+  }
+  .divider { height: 1px; background: #eee; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-name">
+        <h1>Aman Irshad</h1>
+        <span class="badge-id">W1012</span>
+      </div>
+      <span class="badge-status">Fully Recovered</span>
+    </div>
+    <div class="header-meta">
+      <span>📅</span>
+      <span>10/05/2026 – 08/06/2026</span>
+      <span class="dot">·</span>
+      <span>30 days</span>
+      <span class="dot">·</span>
+      <span><strong>Advance: SAR 8,100.00</strong></span>
+      <span class="dot">·</span>
+      <span>Comprehensive</span>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE INFO GRID -->
+  <div style="height:12px"></div>
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="info-cell-label">Employee ID</div>
+      <div class="info-cell-value">W1012</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">Designation</div>
+      <div class="info-cell-value">Jr. Engineer</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">Department</div>
+      <div class="info-cell-value">Engineering</div>
+    </div>
+  </div>
+  <div class="info-grid-2">
+    <div class="info-cell">
+      <div class="info-cell-label">Submitted</div>
+      <div class="info-cell-value">12/05/2026</div>
+    </div>
+    <div class="info-cell">
+      <div class="info-cell-label">Manager Actioned</div>
+      <div class="info-cell-value">12/05/2026</div>
+    </div>
+  </div>
+
+  <!-- ADVANCE BREAKDOWN -->
+  <div class="section-label">ADVANCE BREAKDOWN</div>
+  <div class="breakdown-card">
+    <div class="breakdown-header">
+      <span class="breakdown-header-label">Eligible Salary Components</span>
+      <span class="badge-comprehensive">Comprehensive</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-row-label">Basic Salary</span>
+      <span class="breakdown-row-value">SAR 5,000.00</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-row-label">Housing Allowance</span>
+      <span class="breakdown-row-value">SAR 2,000.00</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-row-label">Transport Allowance</span>
+      <span class="breakdown-row-value">SAR 800.00</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-row-label">Air Ticket Entitlement</span>
+      <span class="breakdown-row-value">SAR 300.00</span>
+    </div>
+    <div class="breakdown-row total">
+      <span class="breakdown-row-label">Total Eligible</span>
+      <span class="breakdown-row-value">SAR 8,100.00</span>
+    </div>
+    <div class="breakdown-row highlight">
+      <span class="breakdown-row-label">Per Day Salary</span>
+      <span class="breakdown-row-value">SAR 270.00</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="breakdown-row-label">Leave Days</span>
+      <span class="breakdown-row-value">30 days</span>
+    </div>
+    <div class="breakdown-row advance-amt">
+      <span class="breakdown-row-label">Advance Amount</span>
+      <span class="breakdown-row-value">SAR 8,100.00</span>
+    </div>
+  </div>
+
+  <!-- FINANCIAL SUMMARY -->
+  <div class="fin-section">
+    <div class="fin-section-header">FINANCIAL SUMMARY</div>
+    <div class="timeline">
+
+      <!-- CHECKPOINT 1: Advance Disbursed -->
+      <div class="timeline-item">
+        <div class="tl-left">
+          <div class="tl-icon green">↗</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-body">
+          <div class="disbursed-card">
+            <div>
+              <div class="disbursed-title">Advance disbursed — SAR 8,100.00</div>
+              <div class="disbursed-sub">10 May 2026 &nbsp;·&nbsp; 30 days × SAR 270.00/day</div>
+            </div>
+            <div class="disbursed-right">
+              <span class="badge-processed">Processed</span>
+              <a class="btn-payslip" href="#">🧾 Payslip</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECKPOINT 2: Early Return -->
+      <div class="timeline-item">
+        <div class="tl-left">
+          <div class="tl-icon orange">↩</div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-body">
+          <div class="er-header">
+            <div class="er-title">Early return reported</div>
+            <div class="er-sub">Returned <strong>30 May 2026</strong> &nbsp;·&nbsp; Leave period revised to <strong>10 May – 29 May 2026</strong></div>
+          </div>
+
+          <div style="border:1.5px solid #e0e0e0; border-radius:10px; background:#fafafa; overflow:hidden;">
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px 14px 10px;">
+              <div style="flex:1;">
+                <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:4px;">Advance Amount For Days Used</div>
+                <div style="font-size:13px; font-weight:700; color:#222; margin-bottom:3px;">20 days &nbsp;<span style="font-size:11px; font-weight:400; color:#888;">10 May → 29 May 2026</span></div>
+                <div style="font-size:11px; color:#666;">20 days × SAR 270.00/day</div>
+              </div>
+              <div style="font-size:13px; font-weight:600; color:#222; white-space:nowrap; padding-left:12px; padding-top:2px;">SAR 5,400.00</div>
+            </div>
+
+            <div style="height:1px; background:#e8e8e8; margin:0 14px;"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:10px 14px;">
+              <div style="flex:1;">
+                <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:4px;">Advance Amount For Days Unused (Early Return)</div>
+                <div style="font-size:13px; font-weight:700; color:#222; margin-bottom:3px;">10 days &nbsp;<span style="font-size:11px; font-weight:400; color:#888;">30 May → 8 Jun 2026</span></div>
+                <div style="font-size:11px; color:#666;">10 days × SAR 270.00/day</div>
+              </div>
+              <div style="font-size:13px; font-weight:600; color:#222; white-space:nowrap; padding-left:12px; padding-top:2px;">SAR 2,700.00</div>
+            </div>
+
+            <div style="height:1px; background:#e0e0e0;"></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f0f0f0;">
+              <div>
+                <div style="font-size:12px; font-weight:700; color:#333;">Total Deductions</div>
+                <div style="font-size:10px; color:#aaa; margin-top:1px;">To be recovered in upcoming payrolls</div>
+              </div>
+              <div style="font-size:15px; font-weight:800; color:#b71c1c;">SAR 8,100.00</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- CHECKPOINT 3: Recovery Plan -->
+      <div class="timeline-item">
+        <div class="tl-left">
+          <div class="tl-icon gray">⏸</div>
+        </div>
+        <div class="tl-body" style="padding-bottom: 8px;">
+          <div style="border:1px solid #e0e0e0; border-radius:8px; background:#fafafa; padding:12px 14px;">
+            <div style="font-size:11px; color:#555; line-height:1.6;">
+              Recovery is capped at <strong style="color:#333;">SAR 2,500/month</strong> (50% of Basic Salary of SAR 5,000). The total outstanding of SAR 8,100.00 will be spread across <strong style="color:#333;">4 payroll cycles</strong> — May 2026 through August 2026 — with unused-days advance taking priority over used-days advance each cycle.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RECOVERY SCHEDULE -->
+  <!-- Recovery logic (cap SAR 2,500/month, unused bucket priority):
+       Unused bucket: 2,700 | Used bucket: 5,400 | Total: 8,100
+       Month 1 (May):   unused 2,500 → unused left 200,  used left 5,400  | deduction 2,500
+       Month 2 (Jun):   unused 200 + used 2,300 → unused left 0, used left 3,100 | deduction 2,500
+       Month 3 (Jul):   used 2,500 → used left 600 | deduction 2,500
+       Month 4 (Aug):   used 600 (final) | deduction 600
+  -->
+  <div class="pbp-section">
+    <div class="pbp-title">RECOVERY SCHEDULE</div>
+
+    <!-- Month 1: May 2026 — Processed | unused: 2,500 of 2,700 recovered -->
+    <div class="acc-card processed">
+      <div class="acc-summary" onclick="toggleAcc(this)">
+        <div class="acc-num">1</div>
+        <div class="acc-meta"><span class="acc-month">May 2026</span></div>
+        <div class="acc-right">
+          <span class="acc-badge-processed">Processed</span>
+          <a class="btn-payslip-sm" href="#" onclick="event.stopPropagation()">🧾 Payslip</a>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-detail">
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot amber"></div>
+            <div class="pbp-line-main">Amount — For leave days unused due to early return</div>
+          </div>
+          <div class="pbp-line-amount">SAR 2,500.00</div>
+        </div>
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot gray"></div>
+            <div class="pbp-line-main" style="color:#aaa;">Amount — For leave days used</div>
+          </div>
+          <div class="pbp-line-amount-dimmed">SAR 0.00</div>
+        </div>
+        <div class="pbp-total-row">
+          <div>
+            <div class="pbp-total-label">Total Deduction</div>
+            <div class="pbp-total-helper">SAR 2,500 monthly cap applied</div>
+          </div>
+          <div class="pbp-total-amount">SAR 2,500.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month 2: June 2026 — Pending | unused: remaining 200 + used: 2,300 -->
+    <div class="acc-card pending">
+      <div class="acc-summary" onclick="toggleAcc(this)">
+        <div class="acc-num">2</div>
+        <div class="acc-meta"><span class="acc-month">June 2026</span></div>
+        <div class="acc-right">
+          <span class="acc-badge-pending">Pending</span>
+          <button class="btn-simulate" onclick="event.stopPropagation()">⚡ Simulate</button>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-detail">
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot amber"></div>
+            <div class="pbp-line-main">Amount — For leave days unused due to early return (remaining)</div>
+          </div>
+          <div class="pbp-line-amount">SAR 200.00</div>
+        </div>
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot blue"></div>
+            <div class="pbp-line-main">Amount — For leave days used</div>
+          </div>
+          <div class="pbp-line-amount">SAR 2,300.00</div>
+        </div>
+        <div class="pbp-total-row">
+          <div>
+            <div class="pbp-total-label">Total Deduction</div>
+            <div class="pbp-total-helper">SAR 2,500 monthly cap applied</div>
+          </div>
+          <div class="pbp-total-amount">SAR 2,500.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month 3: July 2026 — Pending | used only: 2,500 -->
+    <div class="acc-card pending">
+      <div class="acc-summary" onclick="toggleAcc(this)">
+        <div class="acc-num">3</div>
+        <div class="acc-meta"><span class="acc-month">July 2026</span></div>
+        <div class="acc-right">
+          <span class="acc-badge-pending">Pending</span>
+          <button class="btn-simulate" onclick="event.stopPropagation()">⚡ Simulate</button>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-detail">
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot gray"></div>
+            <div class="pbp-line-main" style="color:#aaa;">Amount — For leave days unused due to early return</div>
+          </div>
+          <div class="pbp-line-amount-dimmed">SAR 0.00</div>
+        </div>
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot blue"></div>
+            <div class="pbp-line-main">Amount — For leave days used</div>
+          </div>
+          <div class="pbp-line-amount">SAR 2,500.00</div>
+        </div>
+        <div class="pbp-total-row">
+          <div>
+            <div class="pbp-total-label">Total Deduction</div>
+            <div class="pbp-total-helper">SAR 2,500 monthly cap applied</div>
+          </div>
+          <div class="pbp-total-amount">SAR 2,500.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Month 4: August 2026 — Pending | used only: 600 (final) -->
+    <div class="acc-card pending">
+      <div class="acc-summary" onclick="toggleAcc(this)">
+        <div class="acc-num">4</div>
+        <div class="acc-meta"><span class="acc-month">August 2026</span></div>
+        <div class="acc-right">
+          <span class="acc-badge-pending">Pending</span>
+          <button class="btn-simulate" onclick="event.stopPropagation()">⚡ Simulate</button>
+          <span class="acc-chevron">▼</span>
+        </div>
+      </div>
+      <div class="acc-detail">
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot gray"></div>
+            <div class="pbp-line-main" style="color:#aaa;">Amount — For leave days unused due to early return</div>
+          </div>
+          <div class="pbp-line-amount-dimmed">SAR 0.00</div>
+        </div>
+        <div class="pbp-line">
+          <div class="pbp-line-left">
+            <div class="pbp-dot blue"></div>
+            <div class="pbp-line-main">Amount — For leave days used (final)</div>
+          </div>
+          <div class="pbp-line-amount">SAR 600.00</div>
+        </div>
+        <div class="pbp-total-row">
+          <div>
+            <div class="pbp-total-label">Total Deduction</div>
+            <div class="pbp-total-helper">Final instalment — recovery complete</div>
+          </div>
+          <div class="pbp-total-amount">SAR 600.00</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function toggleAcc(summaryEl) {
+      const detail = summaryEl.nextElementSibling;
+      const chevron = summaryEl.querySelector('.acc-chevron');
+      const isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      chevron.classList.toggle('open', !isOpen);
+    }
+  </script>
+
+  <!-- RECOVERY COMPLETE -->
+  <div class="complete-card">
+    <div class="complete-left">
+      <div class="complete-icon">✅</div>
+      <div>
+        <div class="complete-title">Recovery complete</div>
+        <div class="complete-sub">SAR 8,100.00 recovered in full across 4 payroll periods. No outstanding balance.</div>
+      </div>
+    </div>
+    <div class="complete-right">
+      <div class="complete-closed-label">Closed on</div>
+      <div class="complete-closed-date">August 2026</div>
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="divider"></div>
+  <div class="comments-label">COMMENTS</div>
+  <div style="height: 40px;"></div>
+
+</div>
+</body>
+</html>
